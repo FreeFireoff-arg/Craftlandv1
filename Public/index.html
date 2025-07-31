@@ -5,44 +5,100 @@
   <title>CraftLand Items</title>
   <style>
     body {
+      position: relative;
       margin: 0;
-      background: #000;
-      color: white;
-      font-family: sans-serif;
+      background: #121212;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       text-align: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://i.ibb.co/TxSLMYdV/8d402dc5c8a8.png');
+      background-size: 60% auto; /* Adjust size as needed */
+      background-repeat: no-repeat;
+      background-position: center center;
+      opacity: 0.3;
+      z-index: -1;
+      pointer-events: none;
     }
 
     #searchBox {
-      margin: 20px;
-      padding: 10px;
+      margin: 20px auto;
+      padding: 12px 15px;
       width: 80%;
-      border-radius: 8px;
+      max-width: 800px;
+      border-radius: 25px;
       font-size: 16px;
-      background: transparent;
-      color: white;
-      border: 1px solid #888;
+      background: rgba(30, 30, 30, 0.8);
+      color: #e0e0e0;
+      border: 2px solid #7e57c2;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+      position: sticky;
+      top: 10px;
+      z-index: 100;
+    }
+
+    #searchBox:focus {
+      outline: none;
+      border-color: #b388ff;
+      box-shadow: 0 0 0 3px rgba(126, 87, 194, 0.3);
     }
 
     #appContainer {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-      gap: 10px;
-      padding: 10px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      padding: 15px;
+      max-width: 800px;
+      margin: 0 auto;
+      margin-top: 10px;
+    }
+
+    .app-icon {
+      transition: transform 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .app-icon:hover {
+      transform: scale(1.05);
     }
 
     .app-icon img {
-      width: 60px;
-      height: 60px;
-      border-radius: 10px;
+      width: 70px;
+      height: 70px;
+      border-radius: 15px;
       cursor: pointer;
-      border: 1px solid #555;
+      border: 2px solid #7e57c2;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+      object-fit: cover;
+      background: #1e1e1e;
+    }
+
+    .app-icon img:hover {
+      border-color: #b388ff;
+      box-shadow: 0 6px 12px rgba(126, 87, 194, 0.4);
     }
 
     #uniquePage {
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background: #000;
+      background: rgba(18, 18, 18, 0.95);
+      backdrop-filter: blur(10px);
       color: white;
       display: none;
       flex-direction: column;
@@ -50,55 +106,151 @@
       align-items: center;
       z-index: 999;
       padding: 20px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    #uniquePage.active {
+      display: flex;
+      opacity: 1;
     }
 
     #uniquePage img {
-      width: 100px;
-      height: 100px;
-      border-radius: 20px;
+      width: 150px;
+      height: 150px;
+      border-radius: 25px;
+      border: 3px solid #7e57c2;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      margin-bottom: 20px;
+      object-fit: cover;
+      background: #1e1e1e;
     }
 
-    #uniquePage h2, 
+    #uniquePage h2 {
+      margin: 10px 0;
+      font-size: 24px;
+      color: #b388ff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+
     #uniquePage div {
-      margin: 13px 0;
+      margin: 8px 0;
       font-size: 18px;
+      color: #e0e0e0;
     }
 
     #backBtn {
       position: absolute;
-      top: 20px;
-      left: 20px;
-      background: none;
-      color: white;
-      border: 1px solid white;
-      padding: 5px 10px;
+      top: 25px;
+      left: 25px;
+      background: rgba(126, 87, 194, 0.2);
+      color: #e0e0e0;
+      border: 2px solid #7e57c2;
+      padding: 8px 15px;
       cursor: pointer;
-      border-radius: 5px;
+      border-radius: 25px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    #backBtn:hover {
+      background: rgba(126, 87, 194, 0.4);
+      transform: translateX(-3px);
     }
 
     #copyBtn {
-      background: #444;
+      background: #7e57c2;
       color: white;
-      padding: 5px 10px;
+      padding: 8px 15px;
       border: none;
-      margin-left: 5px;
+      margin-left: 10px;
       cursor: pointer;
-      border-radius: 4px;
+      border-radius: 25px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    #copyBtn:hover {
+      background: #b388ff;
+      transform: translateY(-2px);
+    }
+
+    .info-label {
+      color: #b388ff;
+      font-weight: bold;
+    }
+
+    @media (max-width: 900px) {
+      #appContainer {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        padding: 12px;
+      }
+      
+      .app-icon img {
+        width: 60px;
+        height: 60px;
+      }
+    }
+
+    @media (max-width: 700px) {
+      #appContainer {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        padding: 10px;
+      }
+      
+      .app-icon img {
+        width: 50px;
+        height: 50px;
+      }
+      
+      #uniquePage img {
+        width: 120px;
+        height: 120px;
+      }
+    }
+
+    @media (max-width: 500px) {
+      body::before {
+        background-size: 80% auto;
+      }
+      
+      #appContainer {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        padding: 8px;
+      }
+      
+      .app-icon img {
+        width: 45px;
+        height: 45px;
+      }
+      
+      #uniquePage img {
+        width: 100px;
+        height: 100px;
+      }
+      
+      #uniquePage h2 {
+        font-size: 20px;
+      }
     }
   </style>
 </head>
 <body>
-
-  <input type="text" id="searchBox" placeholder="Search items..." />
+  <input type="text" id="searchBox" placeholder="🔍 Search items..." />
   <div id="appContainer"></div>
 
   <div id="uniquePage">
     <button id="backBtn">← Back</button>
     <img id="uniqueImage">
     <h2 id="uniqueName"></h2>
-    <div id="uniqueType"></div>
-    <div id="uniqueGender"></div>
-    <div>ID: <span id="appIdText"></span> <button id="copyBtn">Copy</button></div>
+    <div><span class="info-label">Type:</span> <span id="uniqueType"></span></div>
+    <div><span class="info-label">Gender:</span> <span id="uniqueGender"></span></div>
+    <div><span class="info-label">ID:</span> <span id="appIdText"></span> <button id="copyBtn">Copy</button></div>
   </div>
 
   <script>
@@ -118,19 +270,35 @@
     let currentId = "";
 
     async function fetchApps() {
-      const res = await fetch("https://craftland1-default-rtdb.firebaseio.com/apps.json");
-      const data = await res.json();
-      allApps = data || {};
-      renderApps(allApps);
+      try {
+        const res = await fetch("https://craftland1-default-rtdb.firebaseio.com/apps.json");
+        const data = await res.json();
+        allApps = data || {};
+        renderApps(allApps);
+      } catch (error) {
+        console.error("Error fetching apps:", error);
+        appContainer.innerHTML = '<div style="color: #ff5252; grid-column: 1/-1; padding: 20px;">Failed to load items. Please try again later.</div>';
+      }
     }
 
     function renderApps(appList) {
       appContainer.innerHTML = '';
+      
+      if (Object.keys(appList).length === 0) {
+        appContainer.innerHTML = '<div style="color: #888; grid-column: 1/-1; padding: 20px;">No items found</div>';
+        return;
+      }
+      
       for (let id in appList) {
         const app = appList[id];
         const div = document.createElement("div");
         div.className = "app-icon";
-        div.innerHTML = `<img src="${app.image}" onclick="openUniquePage('${id}')">`;
+        div.innerHTML = `
+          <img src="${app.image || 'https://via.placeholder.com/70?text=No+Img'}" 
+               alt="${app.name}" 
+               title="${app.name}"
+               onclick="openUniquePage('${id}')">
+        `;
         appContainer.appendChild(div);
       }
     }
@@ -138,43 +306,69 @@
     function openUniquePage(id) {
       const app = allApps[id];
       currentId = id;
-      uniqueImage.src = app.image;
-      uniqueName.textContent = app.name;
-      uniqueType.textContent = "Type: " + (app.type || "N/A");
-      uniqueGender.textContent = "Gender: " + (app.gender || "N/A");
+      uniqueImage.src = app.image || 'https://via.placeholder.com/150?text=No+Image';
+      uniqueImage.alt = app.name;
+      uniqueName.textContent = app.name || "Unnamed Item";
+      uniqueType.textContent = app.type || "N/A";
+      uniqueGender.textContent = app.gender || "N/A";
       appIdText.textContent = id;
-      uniquePage.style.display = "flex";
+      
+      // Show with animation
+      uniquePage.classList.add("active");
+      document.body.style.overflow = "hidden";
 
       // Push a state to the browser history
-      history.pushState({ page: "unique" }, "", "#item");
+      history.pushState({ page: "unique" }, "", `#item=${id}`);
     }
 
-    backBtn.onclick = () => {
-      uniquePage.style.display = "none";
-      history.back(); // simulate back button
-    };
+    function closeUniquePage() {
+      uniquePage.classList.remove("active");
+      document.body.style.overflow = "";
+    }
+
+    backBtn.onclick = closeUniquePage;
 
     copyBtn.onclick = () => {
-      navigator.clipboard.writeText(currentId);
-      copyBtn.innerText = "Copied!";
-      setTimeout(() => copyBtn.innerText = "Copy", 1500);
+      navigator.clipboard.writeText(currentId).then(() => {
+        copyBtn.innerText = "Copied!";
+        setTimeout(() => copyBtn.innerText = "Copy", 1500);
+      }).catch(err => {
+        console.error("Failed to copy:", err);
+        copyBtn.innerText = "Error";
+        setTimeout(() => copyBtn.innerText = "Copy", 1500);
+      });
     };
 
     searchBox.addEventListener("input", () => {
-      const term = searchBox.value.toLowerCase();
+      const term = searchBox.value.toLowerCase().trim();
+      if (!term) {
+        renderApps(allApps);
+        return;
+      }
+      
       const filtered = {};
       for (let id in allApps) {
         const app = allApps[id];
-        const match = `${app.name} ${app.type} ${app.gender}`.toLowerCase();
+        const match = `${app.name || ''} ${app.type || ''} ${app.gender || ''}`.toLowerCase();
         if (match.includes(term)) filtered[id] = app;
       }
       renderApps(filtered);
     });
 
     // Handle mobile or browser back button
-    window.addEventListener("popstate", function () {
-      if (uniquePage.style.display === "flex") {
-        uniquePage.style.display = "none";
+    window.addEventListener("popstate", function(event) {
+      if (uniquePage.classList.contains("active")) {
+        closeUniquePage();
+      }
+    });
+
+    // Handle direct link with hash
+    window.addEventListener("load", () => {
+      if (window.location.hash.startsWith("#item=")) {
+        const id = window.location.hash.split("=")[1];
+        if (id && allApps[id]) {
+          openUniquePage(id);
+        }
       }
     });
 
