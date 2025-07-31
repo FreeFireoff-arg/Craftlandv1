@@ -1,0 +1,184 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CraftLand Items</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      color: white;
+      font-family: sans-serif;
+      text-align: center;
+    }
+
+    #searchBox {
+      margin: 20px;
+      padding: 10px;
+      width: 80%;
+      border-radius: 8px;
+      font-size: 16px;
+      background: transparent;
+      color: white;
+      border: 1px solid #888;
+    }
+
+    #appContainer {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .app-icon img {
+      width: 60px;
+      height: 60px;
+      border-radius: 10px;
+      cursor: pointer;
+      border: 1px solid #555;
+    }
+
+    #uniquePage {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #000;
+      color: white;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+      padding: 20px;
+    }
+
+    #uniquePage img {
+      width: 100px;
+      height: 100px;
+      border-radius: 20px;
+    }
+
+    #uniquePage h2, 
+    #uniquePage div {
+      margin: 13px 0;
+      font-size: 18px;
+    }
+
+    #backBtn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: none;
+      color: white;
+      border: 1px solid white;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    #copyBtn {
+      background: #444;
+      color: white;
+      padding: 5px 10px;
+      border: none;
+      margin-left: 5px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <input type="text" id="searchBox" placeholder="Search items..." />
+  <div id="appContainer"></div>
+
+  <div id="uniquePage">
+    <button id="backBtn">← Back</button>
+    <img id="uniqueImage">
+    <h2 id="uniqueName"></h2>
+    <div id="uniqueType"></div>
+    <div id="uniqueGender"></div>
+    <div>ID: <span id="appIdText"></span> <button id="copyBtn">Copy</button></div>
+  </div>
+
+  <script>
+    const appContainer = document.getElementById("appContainer");
+    const searchBox = document.getElementById("searchBox");
+
+    const uniquePage = document.getElementById("uniquePage");
+    const uniqueImage = document.getElementById("uniqueImage");
+    const uniqueName = document.getElementById("uniqueName");
+    const uniqueType = document.getElementById("uniqueType");
+    const uniqueGender = document.getElementById("uniqueGender");
+    const appIdText = document.getElementById("appIdText");
+    const copyBtn = document.getElementById("copyBtn");
+    const backBtn = document.getElementById("backBtn");
+
+    let allApps = {};
+    let currentId = "";
+
+    async function fetchApps() {
+      const res = await fetch("https://craftland1-default-rtdb.firebaseio.com/apps.json");
+      const data = await res.json();
+      allApps = data || {};
+      renderApps(allApps);
+    }
+
+    function renderApps(appList) {
+      appContainer.innerHTML = '';
+      for (let id in appList) {
+        const app = appList[id];
+        const div = document.createElement("div");
+        div.className = "app-icon";
+        div.innerHTML = `<img src="${app.image}" onclick="openUniquePage('${id}')">`;
+        appContainer.appendChild(div);
+      }
+    }
+
+    function openUniquePage(id) {
+      const app = allApps[id];
+      currentId = id;
+      uniqueImage.src = app.image;
+      uniqueName.textContent = app.name;
+      uniqueType.textContent = "Type: " + (app.type || "N/A");
+      uniqueGender.textContent = "Gender: " + (app.gender || "N/A");
+      appIdText.textContent = id;
+      uniquePage.style.display = "flex";
+
+      // Push a state to the browser history
+      history.pushState({ page: "unique" }, "", "#item");
+    }
+
+    backBtn.onclick = () => {
+      uniquePage.style.display = "none";
+      history.back(); // simulate back button
+    };
+
+    copyBtn.onclick = () => {
+      navigator.clipboard.writeText(currentId);
+      copyBtn.innerText = "Copied!";
+      setTimeout(() => copyBtn.innerText = "Copy", 1500);
+    };
+
+    searchBox.addEventListener("input", () => {
+      const term = searchBox.value.toLowerCase();
+      const filtered = {};
+      for (let id in allApps) {
+        const app = allApps[id];
+        const match = `${app.name} ${app.type} ${app.gender}`.toLowerCase();
+        if (match.includes(term)) filtered[id] = app;
+      }
+      renderApps(filtered);
+    });
+
+    // Handle mobile or browser back button
+    window.addEventListener("popstate", function () {
+      if (uniquePage.style.display === "flex") {
+        uniquePage.style.display = "none";
+      }
+    });
+
+    fetchApps();
+  </script>
+</body>
+</html>
