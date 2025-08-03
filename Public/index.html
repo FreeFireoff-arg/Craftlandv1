@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CraftLand Items</title>
+  <title>Free Fire Items</title>
   <style>
     body {
-      position: relative;
+      background-color: #000;
+      color: #fff;
+      font-family: sans-serif;
       margin: 0;
-      background: #121212;
-      color: #e0e0e0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      text-align: center;
+      padding: 0;
+      position: relative;
       min-height: 100vh;
-      overflow-x: hidden;
     }
-
+    
     body::before {
       content: "";
       position: fixed;
@@ -23,7 +23,7 @@
       width: 100%;
       height: 100%;
       background-image: url('https://i.ibb.co/TxSLMYdV/8d402dc5c8a8.png');
-      background-size: 60% auto; /* Adjust size as needed */
+      background-size: 70% auto;
       background-repeat: no-repeat;
       background-position: center center;
       opacity: 0.3;
@@ -31,348 +31,587 @@
       pointer-events: none;
     }
 
-    #searchBox {
-      margin: 20px auto;
-      padding: 12px 15px;
-      width: 80%;
-      max-width: 800px;
-      border-radius: 25px;
+    h1 {
+      padding: 15px;
+      text-align: center;
+      margin: 0;
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+
+    .search-container {
+      padding: 3px;
+      text-align: center;
+      background-color: rgba(0, 0, 0, 0.7);
+      width: 100vw;
+    }
+
+    #searchInput {
+      height: 30px;
+      padding: 4px 20px;
+      width: 90%;
+      max-width: 100%;
+      border-radius: 2px;
+      border: 2px solid midnightblue;
+      background-color: #222;
+      color: white;
       font-size: 16px;
-      background: rgba(30, 30, 30, 0.8);
-      color: #e0e0e0;
-      border: 2px solid #7e57c2;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-      transition: all 0.3s ease;
-      position: sticky;
-      top: 10px;
-      z-index: 100;
     }
 
-    #searchBox:focus {
-      outline: none;
-      border-color: #b388ff;
-      box-shadow: 0 0 0 3px rgba(126, 87, 194, 0.3);
-    }
-
-    #appContainer {
+    .grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 15px;
+      gap: 10px;
       padding: 15px;
-      max-width: 800px;
-      margin: 0 auto;
-      margin-top: 10px;
     }
 
-    .app-icon {
-      transition: transform 0.2s ease;
+    .item {
+      background-color: transparent;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      aspect-ratio: 1/1;
       display: flex;
       flex-direction: column;
-      align-items: center;
       justify-content: center;
+      align-items: center;
     }
 
-    .app-icon:hover {
+    .item:hover {
       transform: scale(1.05);
+      background-color: rgba(34, 34, 34, 0.9);
     }
 
-    .app-icon img {
-      width: 70px;
-      height: 70px;
-      border-radius: 15px;
-      cursor: pointer;
-      border: 2px solid #7e57c2;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      transition: all 0.3s ease;
+    .item img {
+      width: 60px;
+      height: 60px;
+      border-radius: 5px;
       object-fit: cover;
-      background: #1e1e1e;
     }
 
-    .app-icon img:hover {
-      border-color: #b388ff;
-      box-shadow: 0 6px 12px rgba(126, 87, 194, 0.4);
-    }
-
-    #uniquePage {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(18, 18, 18, 0.95);
-      backdrop-filter: blur(10px);
-      color: white;
-      display: none;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 999;
-      padding: 20px;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    #uniquePage.active {
+    .pagination {
       display: flex;
-      opacity: 1;
+      justify-content: flex-start;
+      margin: 15px 0;
+      gap: 5px;
+      flex-wrap: nowrap;
+      padding: 10px;
+      background-color: rgba(0, 0, 0, 0.7);
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
     }
 
-    #uniquePage img {
-      width: 150px;
-      height: 150px;
-      border-radius: 25px;
-      border: 3px solid #7e57c2;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-      margin-bottom: 20px;
-      object-fit: cover;
-      background: #1e1e1e;
+    .pagination::-webkit-scrollbar {
+      display: none;
     }
 
-    #uniquePage h2 {
-      margin: 10px 0;
-      font-size: 24px;
-      color: #b388ff;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-      max-width: 80%;
-      word-wrap: break-word;
-    }
-
-    #uniquePage div {
-      margin: 8px 0;
-      font-size: 18px;
-      color: #e0e0e0;
-    }
-
-    #backBtn {
-      position: absolute;
-      top: 25px;
-      left: 25px;
-      background: rgba(126, 87, 194, 0.2);
-      color: #e0e0e0;
-      border: 2px solid #7e57c2;
-      padding: 8px 15px;
-      cursor: pointer;
-      border-radius: 25px;
-      font-weight: bold;
-      transition: all 0.3s ease;
-    }
-
-    #backBtn:hover {
-      background: rgba(126, 87, 194, 0.4);
-      transform: translateX(-3px);
-    }
-
-    #copyBtn {
-      background: #7e57c2;
+    .page-btn {
+      background-color: #333;
       color: white;
-      padding: 8px 15px;
       border: none;
-      margin-left: 10px;
+      padding: 6px 12px;
+      border-radius: 4px;
       cursor: pointer;
-      border-radius: 25px;
-      font-weight: bold;
-      transition: all 0.3s ease;
+      transition: all 0.2s;
+      min-width: 36px;
+      text-align: center;
+      flex-shrink: 0;
     }
 
-    #copyBtn:hover {
-      background: #b388ff;
+    .page-btn:hover {
+      background-color: #555;
       transform: translateY(-2px);
     }
 
-    .info-label {
-      color: #b388ff;
+    .page-btn.active {
+      background-color: #007bff;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0, 123, 255, 0.5);
+    }
+
+    .page-btn.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .page-nav {
+      background-color: #444;
       font-weight: bold;
     }
 
-    @media (max-width: 900px) {
-      #appContainer {
+    .page-dots {
+      background: none;
+      color: white;
+      cursor: default;
+      padding: 6px 2px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #aaa;
+    }
+
+    .error {
+      text-align: center;
+      padding: 20px;
+      color: red;
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.9);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background-color: #222;
+      padding: 25px;
+      border-radius: 10px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      border: 1px solid #444;
+    }
+
+    .modal-close {
+      float: right;
+      cursor: pointer;
+      font-size: 24px;
+      color: #aaa;
+      transition: color 0.2s;
+    }
+
+    .modal-close:hover {
+      color: white;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      margin-bottom: 15px;
+      color: gold;
+      text-align: center;
+    }
+
+    .modal-img-container {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .modal-img {
+      width: 120px;
+      height: 120px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 2px solid gold;
+    }
+
+    .modal-detail {
+      margin-bottom: 10px;
+      font-size: 15px;
+      padding: 8px;
+      background-color: rgba(0,0,0,0.3);
+      border-radius: 5px;
+    }
+
+    .detail-label {
+      color: #aaa;
+      display: inline-block;
+      width: 100px;
+      font-weight: bold;
+    }
+
+    .copy-btn {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 10px;
+      font-size: 12px;
+      transition: background-color 0.2s;
+    }
+
+    .copy-btn:hover {
+      background-color: #0056b3;
+    }
+
+    .copy-btn.copied {
+      background-color: #28a745;
+    }
+
+    @media (max-width: 768px) {
+      .grid {
         grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
-        padding: 12px;
       }
       
-      .app-icon img {
+      .item img {
         width: 60px;
         height: 60px;
       }
     }
 
-    @media (max-width: 700px) {
-      #appContainer {
+    @media (max-width: 480px) {
+      .grid {
         grid-template-columns: repeat(4, 1fr);
-        gap: 10px;
+        gap: 8px;
         padding: 10px;
       }
       
-      .app-icon img {
+      .item img {
         width: 50px;
         height: 50px;
       }
       
-      #uniquePage img {
-        width: 120px;
-        height: 120px;
-      }
-    }
-
-    @media (max-width: 500px) {
-      body::before {
-        background-size: 80% auto;
+      .pagination {
+        gap: 3px;
       }
       
-      #appContainer {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
-        padding: 8px;
-      }
-      
-      .app-icon img {
-        width: 45px;
-        height: 45px;
-      }
-      
-      #uniquePage img {
-        width: 100px;
-        height: 100px;
-      }
-      
-      #uniquePage h2 {
-        font-size: 20px;
+      .page-btn {
+        padding: 4px 8px;
+        min-width: 30px;
       }
     }
   </style>
 </head>
 <body>
-  <input type="text" id="searchBox" placeholder="🔍 Search items..." />
-  <div id="appContainer"></div>
 
-  <div id="uniquePage">
-    <button id="backBtn">← Back</button>
-    <img id="uniqueImage">
-    <h2 id="uniqueName"></h2>
-    <div><span class="info-label">Type:</span> <span id="uniqueType"></span></div>
-    <div><span class="info-label">Gender:</span> <span id="uniqueGender"></span></div>
-    <div><span class="info-label">ID:</span> <span id="appIdText"></span> <button id="copyBtn">Copy</button></div>
+<div class="search-container">
+  <input type="text" id="searchInput" placeholder="Search by items or ID...">
+</div>
+
+<div class="grid" id="itemContainer"></div>
+<div class="pagination" id="pagination"></div>
+<div class="loading" id="loading">Loading items...</div>
+<div class="error" id="error" style="display:none;"></div>
+
+<!-- Modal for item details -->
+<div class="modal" id="itemModal">
+  <div class="modal-content">
+    <span class="modal-close" id="modalClose">&times;</span>
+    <div class="modal-title" id="modalTitle">Item Details</div>
+    <div class="modal-img-container">
+      <img class="modal-img" id="modalImg" src="" alt="Item Icon">
+    </div>
+    <div class="modal-details" id="modalDetails"></div>
   </div>
+</div>
 
-  <script>
-    const appContainer = document.getElementById("appContainer");
-    const searchBox = document.getElementById("searchBox");
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
-    const uniquePage = document.getElementById("uniquePage");
-    const uniqueImage = document.getElementById("uniqueImage");
-    const uniqueName = document.getElementById("uniqueName");
-    const uniqueType = document.getElementById("uniqueType");
-    const uniqueGender = document.getElementById("uniqueGender");
-    const appIdText = document.getElementById("appIdText");
-    const copyBtn = document.getElementById("copyBtn");
-    const backBtn = document.getElementById("backBtn");
+<script>
+  // Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyDbV11XtCttDOc09dH0qeKn0AxvCDDG5p8",
+    authDomain: "craftland3-6b6d5.firebaseapp.com",
+    databaseURL: "https://craftland3-6b6d5-default-rtdb.firebaseio.com",
+    projectId: "craftland3-6b6d5",
+    storageBucket: "craftland3-6b6d5.appspot.com",
+    messagingSenderId: "559001168407",
+    appId: "1:559001168407:web:e0f3d462012df2f9650a52"
+  };
 
-    let allApps = {};
-    let currentId = "";
+  // Initialize Firebase
+  const app = firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
 
-    async function fetchApps() {
-      try {
-        const res = await fetch("https://craftland1-default-rtdb.firebaseio.com/apps.json");
-        const data = await res.json();
-        allApps = data || {};
-        renderApps(allApps);
-      } catch (error) {
-        console.error("Error fetching apps:", error);
-        appContainer.innerHTML = '<div style="color: #ff5252; grid-column: 1/-1; padding: 20px;">Failed to load items. Please try again later.</div>';
-      }
-    }
+  // Constants
+  const itemsPerPage = 40;
+  let allItems = [];
+  let filteredItems = [];
+  let currentPage = 1;
+  let totalPages = 1;
 
-    function renderApps(appList) {
-      appContainer.innerHTML = '';
-      
-      if (Object.keys(appList).length === 0) {
-        appContainer.innerHTML = '<div style="color: #888; grid-column: 1/-1; padding: 20px;">No items found</div>';
-        return;
-      }
-      
-      for (let id in appList) {
-        const app = appList[id];
-        const div = document.createElement("div");
-        div.className = "app-icon";
-        div.innerHTML = `
-          <img src="${app.image || 'https://via.placeholder.com/70?text=No+Img'}" 
-               alt="${app.name}" 
-               title="${app.name}"
-               onclick="openUniquePage('${id}')">
-        `;
-        appContainer.appendChild(div);
-      }
-    }
+  // DOM elements
+  const searchInput = document.getElementById("searchInput");
+  const itemModal = document.getElementById("itemModal");
+  const modalClose = document.getElementById("modalClose");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalImg = document.getElementById("modalImg");
+  const modalDetails = document.getElementById("modalDetails");
 
-    function openUniquePage(id) {
-      const app = allApps[id];
-      currentId = id;
-      uniqueImage.src = app.image || 'https://via.placeholder.com/150?text=No+Image';
-      uniqueImage.alt = app.name;
-      uniqueName.textContent = app.name || "Unnamed Item";
-      uniqueType.textContent = app.type || "N/A";
-      uniqueGender.textContent = app.gender || "N/A";
-      appIdText.textContent = id;
-      
-      // Show with animation
-      uniquePage.classList.add("active");
-      document.body.style.overflow = "hidden";
+  // Fields to hide in modal
+  const HIDDEN_FIELDS = ['rare', 'collection', 'type', 'inunique', 'items'];
 
-      // Push a state to the browser history
-      history.pushState({ page: "unique" }, "", `#item=${id}`);
-    }
-
-    function closeUniquePage() {
-      uniquePage.classList.remove("active");
-      document.body.style.overflow = "";
-    }
-
-    backBtn.onclick = closeUniquePage;
-
-    copyBtn.onclick = () => {
-      navigator.clipboard.writeText(currentId).then(() => {
-        copyBtn.innerText = "Copied!";
-        setTimeout(() => copyBtn.innerText = "Copy", 1500);
-      }).catch(err => {
-        console.error("Failed to copy:", err);
-        copyBtn.innerText = "Error";
-        setTimeout(() => copyBtn.innerText = "Copy", 1500);
-      });
-    };
-
-    searchBox.addEventListener("input", () => {
-      const term = searchBox.value.toLowerCase().trim();
-      if (!term) {
-        renderApps(allApps);
-        return;
-      }
-      
-      const filtered = {};
-      for (let id in allApps) {
-        const app = allApps[id];
-        const match = `${app.name || ''} ${app.type || ''} ${app.gender || ''}`.toLowerCase();
-        if (match.includes(term)) filtered[id] = app;
-      }
-      renderApps(filtered);
-    });
-
-    // Handle mobile or browser back button
-    window.addEventListener("popstate", function(event) {
-      if (uniquePage.classList.contains("active")) {
-        closeUniquePage();
-      }
-    });
-
-    // Handle direct link with hash
-    window.addEventListener("load", () => {
-      if (window.location.hash.startsWith("#item=")) {
-        const id = window.location.hash.split("=")[1];
-        if (id && allApps[id]) {
-          openUniquePage(id);
+  // Fetch data from Firebase
+  function fetchData() {
+    document.getElementById("loading").style.display = "block";
+    document.getElementById("error").style.display = "none";
+    
+    database.ref('/').once('value')
+      .then((snapshot) => {
+        document.getElementById("loading").style.display = "none";
+        const data = snapshot.val();
+        
+        if (!data) {
+          throw new Error("Database is empty");
         }
-      }
-    });
+        
+        // Convert object to array
+        allItems = Object.entries(data).map(([key, value]) => {
+          return { key, ...value };
+        }).filter(item => item.itemID);
+        
+        if (allItems.length === 0) {
+          throw new Error("No items found with itemID");
+        }
+        
+        // Sort items by itemID
+        allItems.sort((a, b) => a.itemID - b.itemID);
+        filteredItems = [...allItems];
+        
+        updatePagination();
+        loadPage(1);
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+        showError(error.message);
+      });
+  }
 
-    fetchApps();
-  </script>
+  // Filter items based on search input
+  function filterItems() {
+    const searchTerm = searchInput.value.toLowerCase();
+    
+    if (searchTerm === '') {
+      filteredItems = [...allItems];
+    } else {
+      filteredItems = allItems.filter(item => {
+        return (
+          (item.name && item.name.toLowerCase().includes(searchTerm)) ||
+          (item.itemID && item.itemID.toString().includes(searchTerm)) ||
+          (item.description && item.description.toLowerCase().includes(searchTerm)) ||
+          (item.description2 && item.description2.toLowerCase().includes(searchTerm))
+        );
+      });
+    }
+    
+    currentPage = 1;
+    updatePagination();
+    loadPage(1);
+  }
+
+  // Update pagination based on filtered items
+  function updatePagination() {
+    totalPages = Math.ceil(filteredItems.length / itemsPerPage) || 1;
+    setupPagination();
+  }
+
+  // Load items for specific page
+  function loadPage(page) {
+    currentPage = page;
+    const container = document.getElementById("itemContainer");
+    container.innerHTML = "";
+    
+    const start = (page - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const pageItems = filteredItems.slice(start, end);
+    
+    if (pageItems.length === 0) {
+      container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;">No items found</div>';
+      return;
+    }
+    
+    pageItems.forEach(item => {
+      const itemDiv = createItemElement(item);
+      container.appendChild(itemDiv);
+    });
+    
+    updateActiveButton();
+    
+    // Scroll to top of items
+    window.scrollTo({
+      top: document.getElementById("searchInput").offsetHeight,
+      behavior: 'smooth'
+    });
+  }
+
+  // Create item DOM element
+  function createItemElement(item) {
+    const div = document.createElement("div");
+    div.className = "item";
+    div.title = item.name || `Item ${item.itemID}`;
+    
+    // Item Image
+    const img = document.createElement("img");
+    img.src = `https://freefireinfo.vercel.app/icon?id=${item.itemID}`;
+    img.alt = item.name || `Item ${item.itemID}`;
+    img.onerror = () => {
+      img.src = "https://via.placeholder.com/70x70?text=?";
+    };
+    div.appendChild(img);
+    
+    // Click event to show details
+    div.addEventListener('click', () => showItemDetails(item));
+    
+    return div;
+  }
+
+  // Show item details in modal
+  function showItemDetails(item) {
+    modalTitle.textContent = item.name || `Item ${item.itemID}`;
+    modalImg.src = `https://freefireinfo.vercel.app/icon?id=${item.itemID}`;
+    modalImg.onerror = () => {
+      modalImg.src = "https://via.placeholder.com/120x120?text=?";
+    };
+    
+    // Build details HTML
+    let detailsHTML = '';
+    
+    // Item ID with copy button
+    if (item.itemID) {
+      detailsHTML += `
+        <div class="modal-detail">
+          <span class="detail-label">Item ID:</span> ${item.itemID}
+          <button class="copy-btn" onclick="copyToClipboard(${item.itemID}, this)">Copy</button>
+        </div>
+      `;
+    }
+    
+    // Name (from description field)
+    if (item.description) {
+      detailsHTML += `
+        <div class="modal-detail">
+          <span class="detail-label">Name:</span> ${item.description}
+        </div>
+      `;
+    }
+    
+    // Description (from description2 field)
+    if (item.description2) {
+      detailsHTML += `
+        <div class="modal-detail">
+          <span class="detail-label">Description:</span> ${item.description2}
+        </div>
+      `;
+    }
+    
+    // Additional fields
+    for (const [key, value] of Object.entries(item)) {
+      if (!HIDDEN_FIELDS.includes(key) && 
+          !['itemID', 'name', 'description', 'description2', 'key'].includes(key) && 
+          value !== undefined && value !== null && value !== '') {
+        detailsHTML += `
+          <div class="modal-detail">
+            <span class="detail-label">${key}:</span> ${value}
+          </div>
+        `;
+      }
+    }
+    
+    modalDetails.innerHTML = detailsHTML || '<div class="modal-detail">No additional details available</div>';
+    itemModal.style.display = "flex";
+  }
+
+  // Copy to clipboard function
+  window.copyToClipboard = function(text, button) {
+    navigator.clipboard.writeText(text.toString()).then(() => {
+      button.classList.add('copied');
+      button.textContent = 'Copied!';
+      setTimeout(() => {
+        button.classList.remove('copied');
+        button.textContent = 'Copy';
+      }, 2000);
+    }).catch(err => {
+      console.error('Failed to copy: ', err);
+    });
+  };
+
+  // Setup pagination buttons with all page numbers
+  function setupPagination() {
+    const pagination = document.getElementById("pagination");
+    pagination.innerHTML = "";
+    
+    if (totalPages <= 1) return;
+    
+    // Previous button
+    const prevBtn = createPageButton("←", currentPage - 1, "page-nav");
+    prevBtn.disabled = currentPage === 1;
+    if (currentPage === 1) {
+      prevBtn.classList.add("disabled");
+    }
+    pagination.appendChild(prevBtn);
+    
+    // Show all page numbers
+    for (let i = 1; i <= totalPages; i++) {
+      pagination.appendChild(createPageButton(i, i));
+    }
+    
+    // Next button
+    const nextBtn = createPageButton("→", currentPage + 1, "page-nav");
+    nextBtn.disabled = currentPage === totalPages;
+    if (currentPage === totalPages) {
+      nextBtn.classList.add("disabled");
+    }
+    pagination.appendChild(nextBtn);
+  }
+
+  function createPageButton(text, page, extraClass = "") {
+    const btn = document.createElement("button");
+    btn.className = `page-btn ${page === currentPage ? "active" : ""} ${extraClass}`;
+    btn.textContent = text;
+    btn.dataset.page = page;
+    btn.onclick = () => {
+      if (!btn.disabled) {
+        loadPage(page);
+      }
+    };
+    return btn;
+  }
+
+  function updateActiveButton() {
+    document.querySelectorAll(".page-btn").forEach(btn => {
+      btn.classList.toggle("active", parseInt(btn.dataset.page) === currentPage);
+    });
+  }
+
+  function showError(message) {
+    document.getElementById("loading").style.display = "none";
+    const errorEl = document.getElementById("error");
+    errorEl.style.display = "block";
+    errorEl.innerHTML = `
+      <p>Error loading items: ${message}</p>
+      <p>Please check console for details (Ctrl+Shift+I)</p>
+    `;
+  }
+
+  // Initialize the app
+  modalClose.addEventListener('click', () => {
+    itemModal.style.display = "none";
+  });
+
+  // Close modal when clicking outside
+  itemModal.addEventListener('click', (e) => {
+    if (e.target === itemModal) {
+      itemModal.style.display = "none";
+    }
+  });
+
+  // Search functionality
+  searchInput.addEventListener('input', filterItems);
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && itemModal.style.display === "flex") {
+      itemModal.style.display = "none";
+    }
+  });
+
+  fetchData();
+</script>
+
 </body>
 </html>
