@@ -47,14 +47,21 @@
 
     #searchInput {
       height: 30px;
-      padding: 4px 20px;
-      width: 90%;
-      max-width: 100%;
-      border-radius: 2px;
-      border: 2px solid midnightblue;
+      padding: 6px 20px;
+      width: 100vw;
+      max-width: 85%;
+      border-radius: 20px;
+      border: none;
       background-color: #222;
       color: white;
       font-size: 16px;
+    }
+
+    .search-hint {
+      color: #aaa;
+      font-size: 12px;
+      padding: 5px;
+      text-align: center;
     }
 
     .grid {
@@ -76,6 +83,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      position: relative;
     }
 
     .item:hover {
@@ -84,10 +92,39 @@
     }
 
     .item img {
-      width: 60px;
-      height: 60px;
+      width: 70px;
+      height: 70px;
       border-radius: 5px;
       object-fit: cover;
+    }
+
+    .item-rarity {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .rarity-blue {
+      background-color: #1E90FF;
+      box-shadow: 0 0 5px #1E90FF;
+    }
+
+    .rarity-purple {
+      background-color: #9370DB;
+      box-shadow: 0 0 5px #9370DB;
+    }
+
+    .rarity-red {
+      background-color: #FF4500;
+      box-shadow: 0 0 5px #FF4500;
+    }
+
+    .rarity-gold {
+      background-color: #FFD700;
+      box-shadow: 0 0 5px #FFD700;
     }
 
     .pagination {
@@ -288,7 +325,7 @@
 <body>
 
 <div class="search-container">
-  <input type="text" id="searchInput" placeholder="Search by items or ID...">
+  <input type="text" id="searchInput" placeholder="Search by items (e.g. 'Rare:RED', 'OB', 'Reanimation Jutsu')">
 </div>
 
 <div class="grid" id="itemContainer"></div>
@@ -313,304 +350,341 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
 <script>
-  // Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyDbV11XtCttDOc09dH0qeKn0AxvCDDG5p8",
-    authDomain: "craftland3-6b6d5.firebaseapp.com",
-    databaseURL: "https://craftland3-6b6d5-default-rtdb.firebaseio.com",
-    projectId: "craftland3-6b6d5",
-    storageBucket: "craftland3-6b6d5.appspot.com",
-    messagingSenderId: "559001168407",
-    appId: "1:559001168407:web:e0f3d462012df2f9650a52"
-  };
+  // First fetch the Firebase config from JSON file
+  fetch('firebase-config.json')
+    .then(response => response.json())
+    .then(firebaseConfig => {
+      // Initialize Firebase with the config
+      const app = firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
 
-  // Initialize Firebase
-  const app = firebase.initializeApp(firebaseConfig);
-  const database = firebase.database();
+      // Constants
+      const itemsPerPage = 40;
+      let allItems = [];
+      let filteredItems = [];
+      let currentPage = 1;
+      let totalPages = 1;
 
-  // Constants
-  const itemsPerPage = 40;
-  let allItems = [];
-  let filteredItems = [];
-  let currentPage = 1;
-  let totalPages = 1;
+      // DOM elements
+      const searchInput = document.getElementById("searchInput");
+      const itemModal = document.getElementById("itemModal");
+      const modalClose = document.getElementById("modalClose");
+      const modalTitle = document.getElementById("modalTitle");
+      const modalImg = document.getElementById("modalImg");
+      const modalDetails = document.getElementById("modalDetails");
 
-  // DOM elements
-  const searchInput = document.getElementById("searchInput");
-  const itemModal = document.getElementById("itemModal");
-  const modalClose = document.getElementById("modalClose");
-  const modalTitle = document.getElementById("modalTitle");
-  const modalImg = document.getElementById("modalImg");
-  const modalDetails = document.getElementById("modalDetails");
+      // Fields to hide in modal
+      const HIDDEN_FIELDS = ['key', 'icon', 'IconInAB'];
 
-  // Fields to hide in modal
-  const HIDDEN_FIELDS = ['rare', 'collection', 'type', 'inunique', 'items'];
-
-  // Fetch data from Firebase
-  function fetchData() {
-    document.getElementById("loading").style.display = "block";
-    document.getElementById("error").style.display = "none";
-    
-    database.ref('/').once('value')
-      .then((snapshot) => {
-        document.getElementById("loading").style.display = "none";
-        const data = snapshot.val();
+      // Fetch data from Firebase
+      function fetchData() {
+        document.getElementById("loading").style.display = "block";
+        document.getElementById("error").style.display = "none";
         
-        if (!data) {
-          throw new Error("Database is empty");
+        database.ref('/').once('value')
+          .then((snapshot) => {
+            document.getElementById("loading").style.display = "none";
+            const data = snapshot.val();
+            
+            if (!data) {
+              throw new Error("Database is empty");
+            }
+            
+            // Convert object to array
+            allItems = Object.entries(data).map(([key, value]) => {
+              return { key, ...value };
+            }).filter(item => item.itemID);
+            
+            if (allItems.length === 0) {
+              throw new Error("No items found with itemID");
+            }
+            
+            // Sort items by itemID
+            allItems.sort((a, b) => a.itemID - b.itemID);
+            filteredItems = [...allItems];
+            
+            updatePagination();
+            loadPage(1);
+          })
+          .catch((error) => {
+            console.error("Error fetching data:", error);
+            showError(error.message);
+          });
+      }
+
+      // Filter items based on search input
+      function filterItems() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        
+        if (searchTerm === '') {
+          filteredItems = [...allItems];
+        } else {
+          // Check for key:value search (e.g. "Rare:RED", "tag:OB50")
+          const keyValueMatch = searchTerm.match(/^([a-z0-9_]+):(.+)$/i);
+          
+          if (keyValueMatch) {
+            const searchKey = keyValueMatch[1].toLowerCase();
+            const searchValue = keyValueMatch[2].toLowerCase();
+            
+            filteredItems = allItems.filter(item => {
+              // Check if item has this property
+              if (item.hasOwnProperty(searchKey)) {
+                const itemValue = String(item[searchKey]).toLowerCase();
+                return itemValue.includes(searchValue);
+              }
+              return false;
+            });
+          } else {
+            // Regular search - check all fields
+            filteredItems = allItems.filter(item => {
+              for (const [key, value] of Object.entries(item)) {
+                // Skip hidden and special fields
+                if (HIDDEN_FIELDS.includes(key)) continue;
+                
+                // Convert value to string and check
+                const strValue = String(value).toLowerCase();
+                if (strValue.includes(searchTerm)) {
+                  return true;
+                }
+              }
+              return false;
+            });
+          }
         }
         
-        // Convert object to array
-        allItems = Object.entries(data).map(([key, value]) => {
-          return { key, ...value };
-        }).filter(item => item.itemID);
-        
-        if (allItems.length === 0) {
-          throw new Error("No items found with itemID");
-        }
-        
-        // Sort items by itemID
-        allItems.sort((a, b) => a.itemID - b.itemID);
-        filteredItems = [...allItems];
-        
+        currentPage = 1;
         updatePagination();
         loadPage(1);
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-        showError(error.message);
-      });
-  }
+      }
 
-  // Filter items based on search input
-  function filterItems() {
-    const searchTerm = searchInput.value.toLowerCase();
-    
-    if (searchTerm === '') {
-      filteredItems = [...allItems];
-    } else {
-      filteredItems = allItems.filter(item => {
-        return (
-          (item.name && item.name.toLowerCase().includes(searchTerm)) ||
-          (item.itemID && item.itemID.toString().includes(searchTerm)) ||
-          (item.description && item.description.toLowerCase().includes(searchTerm)) ||
-          (item.description2 && item.description2.toLowerCase().includes(searchTerm))
-        );
-      });
-    }
-    
-    currentPage = 1;
-    updatePagination();
-    loadPage(1);
-  }
+      // Update pagination based on filtered items
+      function updatePagination() {
+        totalPages = Math.ceil(filteredItems.length / itemsPerPage) || 1;
+        setupPagination();
+      }
 
-  // Update pagination based on filtered items
-  function updatePagination() {
-    totalPages = Math.ceil(filteredItems.length / itemsPerPage) || 1;
-    setupPagination();
-  }
+      // Load items for specific page
+      function loadPage(page) {
+        currentPage = page;
+        const container = document.getElementById("itemContainer");
+        container.innerHTML = "";
+        
+        const start = (page - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const pageItems = filteredItems.slice(start, end);
+        
+        if (pageItems.length === 0) {
+          container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;">No items found</div>';
+          return;
+        }
+        
+        pageItems.forEach(item => {
+          const itemDiv = createItemElement(item);
+          container.appendChild(itemDiv);
+        });
+        
+        updateActiveButton();
+        
+        // Scroll to top of items
+        window.scrollTo({
+          top: document.getElementById("searchInput").offsetHeight,
+          behavior: 'smooth'
+        });
+      }
 
-  // Load items for specific page
-  function loadPage(page) {
-    currentPage = page;
-    const container = document.getElementById("itemContainer");
-    container.innerHTML = "";
-    
-    const start = (page - 1) * itemsPerPage;
-    const end = start + itemsPerPage;
-    const pageItems = filteredItems.slice(start, end);
-    
-    if (pageItems.length === 0) {
-      container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;">No items found</div>';
-      return;
-    }
-    
-    pageItems.forEach(item => {
-      const itemDiv = createItemElement(item);
-      container.appendChild(itemDiv);
-    });
-    
-    updateActiveButton();
-    
-    // Scroll to top of items
-    window.scrollTo({
-      top: document.getElementById("searchInput").offsetHeight,
-      behavior: 'smooth'
-    });
-  }
+      // Create item DOM element
+      function createItemElement(item) {
+        const div = document.createElement("div");
+        div.className = "item";
+        
+        // Use description or itemID as title
+        const itemName = item.description || item.Name || `Item ${item.itemID}`;
+        div.title = itemName;
+        
+        // Item Image
+        const img = document.createElement("img");
+        img.src = `https://freefireinfo.vercel.app/icon?id=${item.itemID}`;
+        img.alt = itemName;
+        img.onerror = () => {
+          img.src = "https://via.placeholder.com/70x70?text=?";
+        };
+        div.appendChild(img);
+        
+        // Add rarity indicator if available
+        if (item.Rare) {
+          const rarityDot = document.createElement("div");
+          rarityDot.className = "item-rarity";
+          
+          switch(item.Rare.toUpperCase()) {
+            case "BLUE":
+              rarityDot.classList.add("rarity-blue");
+              break;
+            case "PURPLE":
+            case "VIOLET":
+              rarityDot.classList.add("rarity-purple");
+              break;
+            case "RED":
+              rarityDot.classList.add("rarity-red");
+              break;
+            case "GOLD":
+            case "YELLOW":
+              rarityDot.classList.add("rarity-gold");
+              break;
+            default:
+              rarityDot.style.display = "none";
+          }
+          
+          div.appendChild(rarityDot);
+        }
+        
+        // Click event to show details
+        div.addEventListener('click', () => showItemDetails(item));
+        
+        return div;
+      }
 
-  // Create item DOM element
-  function createItemElement(item) {
-    const div = document.createElement("div");
-    div.className = "item";
-    div.title = item.name || `Item ${item.itemID}`;
-    
-    // Item Image
-    const img = document.createElement("img");
-    img.src = `https://freefireinfo.vercel.app/icon?id=${item.itemID}`;
-    img.alt = item.name || `Item ${item.itemID}`;
-    img.onerror = () => {
-      img.src = "https://via.placeholder.com/70x70?text=?";
-    };
-    div.appendChild(img);
-    
-    // Click event to show details
-    div.addEventListener('click', () => showItemDetails(item));
-    
-    return div;
-  }
+      // Show item details in modal
+      function showItemDetails(item) {
+        const itemName = item.description || item.Name || `Item ${item.itemID}`;
+        modalTitle.textContent = itemName;
+        modalImg.src = `https://freefireinfo.vercel.app/icon?id=${item.itemID}`;
+        modalImg.onerror = () => {
+          modalImg.src = "https://via.placeholder.com/120x120?text=?";
+        };
+        
+        // Build details HTML
+        let detailsHTML = '';
+        
+        // Item ID with copy button (only place where copy button appears)
+        if (item.itemID) {
+          detailsHTML += `
+            <div class="modal-detail">
+              <span class="detail-label">Item ID:</span> ${item.itemID}
+              <button class="copy-btn" onclick="copyToClipboard(${item.itemID}, this)">Copy</button>
+            </div>
+          `;
+        }
+        
+        // Show all fields except hidden ones
+        for (const [key, value] of Object.entries(item)) {
+          // Skip if field should be hidden or is itemID (already shown above)
+          if (HIDDEN_FIELDS.includes(key) || key === 'itemID') continue;
+          
+          // Skip empty values
+          if (value === undefined || value === null || value === '') continue;
+          
+          detailsHTML += `
+            <div class="modal-detail">
+              <span class="detail-label">${key}:</span> ${value}
+            </div>
+          `;
+        }
+        
+        modalDetails.innerHTML = detailsHTML || '<div class="modal-detail">No additional details available</div>';
+        itemModal.style.display = "flex";
+      }
 
-  // Show item details in modal
-  function showItemDetails(item) {
-    modalTitle.textContent = item.name || `Item ${item.itemID}`;
-    modalImg.src = `https://freefireinfo.vercel.app/icon?id=${item.itemID}`;
-    modalImg.onerror = () => {
-      modalImg.src = "https://via.placeholder.com/120x120?text=?";
-    };
-    
-    // Build details HTML
-    let detailsHTML = '';
-    
-    // Item ID with copy button
-    if (item.itemID) {
-      detailsHTML += `
-        <div class="modal-detail">
-          <span class="detail-label">Item ID:</span> ${item.itemID}
-          <button class="copy-btn" onclick="copyToClipboard(${item.itemID}, this)">Copy</button>
-        </div>
-      `;
-    }
-    
-    // Name (from description field)
-    if (item.description) {
-      detailsHTML += `
-        <div class="modal-detail">
-          <span class="detail-label">Name:</span> ${item.description}
-        </div>
-      `;
-    }
-    
-    // Description (from description2 field)
-    if (item.description2) {
-      detailsHTML += `
-        <div class="modal-detail">
-          <span class="detail-label">Description:</span> ${item.description2}
-        </div>
-      `;
-    }
-    
-    // Additional fields
-    for (const [key, value] of Object.entries(item)) {
-      if (!HIDDEN_FIELDS.includes(key) && 
-          !['itemID', 'name', 'description', 'description2', 'key'].includes(key) && 
-          value !== undefined && value !== null && value !== '') {
-        detailsHTML += `
-          <div class="modal-detail">
-            <span class="detail-label">${key}:</span> ${value}
-          </div>
+      // Copy to clipboard function
+      window.copyToClipboard = function(text, button) {
+        navigator.clipboard.writeText(text.toString()).then(() => {
+          button.classList.add('copied');
+          button.textContent = 'Copied!';
+          setTimeout(() => {
+            button.classList.remove('copied');
+            button.textContent = 'Copy';
+          }, 2000);
+        }).catch(err => {
+          console.error('Failed to copy: ', err);
+        });
+      };
+
+      // Setup pagination buttons with all page numbers
+      function setupPagination() {
+        const pagination = document.getElementById("pagination");
+        pagination.innerHTML = "";
+        
+        if (totalPages <= 1) return;
+        
+        // Previous button
+        const prevBtn = createPageButton("←", currentPage - 1, "page-nav");
+        prevBtn.disabled = currentPage === 1;
+        if (currentPage === 1) {
+          prevBtn.classList.add("disabled");
+        }
+        pagination.appendChild(prevBtn);
+        
+        // Show all page numbers
+        for (let i = 1; i <= totalPages; i++) {
+          pagination.appendChild(createPageButton(i, i));
+        }
+        
+        // Next button
+        const nextBtn = createPageButton("→", currentPage + 1, "page-nav");
+        nextBtn.disabled = currentPage === totalPages;
+        if (currentPage === totalPages) {
+          nextBtn.classList.add("disabled");
+        }
+        pagination.appendChild(nextBtn);
+      }
+
+      function createPageButton(text, page, extraClass = "") {
+        const btn = document.createElement("button");
+        btn.className = `page-btn ${page === currentPage ? "active" : ""} ${extraClass}`;
+        btn.textContent = text;
+        btn.dataset.page = page;
+        btn.onclick = () => {
+          if (!btn.disabled) {
+            loadPage(page);
+          }
+        };
+        return btn;
+      }
+
+      function updateActiveButton() {
+        document.querySelectorAll(".page-btn").forEach(btn => {
+          btn.classList.toggle("active", parseInt(btn.dataset.page) === currentPage);
+        });
+      }
+
+      function showError(message) {
+        document.getElementById("loading").style.display = "none";
+        const errorEl = document.getElementById("error");
+        errorEl.style.display = "block";
+        errorEl.innerHTML = `
+          <p>Error loading items: ${message}</p>
+          <p>Please check console for details (Ctrl+Shift+I)</p>
         `;
       }
-    }
-    
-    modalDetails.innerHTML = detailsHTML || '<div class="modal-detail">No additional details available</div>';
-    itemModal.style.display = "flex";
-  }
 
-  // Copy to clipboard function
-  window.copyToClipboard = function(text, button) {
-    navigator.clipboard.writeText(text.toString()).then(() => {
-      button.classList.add('copied');
-      button.textContent = 'Copied!';
-      setTimeout(() => {
-        button.classList.remove('copied');
-        button.textContent = 'Copy';
-      }, 2000);
-    }).catch(err => {
-      console.error('Failed to copy: ', err);
+      // Initialize the app
+      modalClose.addEventListener('click', () => {
+        itemModal.style.display = "none";
+      });
+
+      // Close modal when clicking outside
+      itemModal.addEventListener('click', (e) => {
+        if (e.target === itemModal) {
+          itemModal.style.display = "none";
+        }
+      });
+
+      // Search functionality
+      searchInput.addEventListener('input', filterItems);
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && itemModal.style.display === "flex") {
+          itemModal.style.display = "none";
+        }
+      });
+
+      // Start the app
+      fetchData();
+    })
+    .catch(error => {
+      console.error("Error loading Firebase config:", error);
+      showError("Failed to load Firebase configuration");
     });
-  };
-
-  // Setup pagination buttons with all page numbers
-  function setupPagination() {
-    const pagination = document.getElementById("pagination");
-    pagination.innerHTML = "";
-    
-    if (totalPages <= 1) return;
-    
-    // Previous button
-    const prevBtn = createPageButton("←", currentPage - 1, "page-nav");
-    prevBtn.disabled = currentPage === 1;
-    if (currentPage === 1) {
-      prevBtn.classList.add("disabled");
-    }
-    pagination.appendChild(prevBtn);
-    
-    // Show all page numbers
-    for (let i = 1; i <= totalPages; i++) {
-      pagination.appendChild(createPageButton(i, i));
-    }
-    
-    // Next button
-    const nextBtn = createPageButton("→", currentPage + 1, "page-nav");
-    nextBtn.disabled = currentPage === totalPages;
-    if (currentPage === totalPages) {
-      nextBtn.classList.add("disabled");
-    }
-    pagination.appendChild(nextBtn);
-  }
-
-  function createPageButton(text, page, extraClass = "") {
-    const btn = document.createElement("button");
-    btn.className = `page-btn ${page === currentPage ? "active" : ""} ${extraClass}`;
-    btn.textContent = text;
-    btn.dataset.page = page;
-    btn.onclick = () => {
-      if (!btn.disabled) {
-        loadPage(page);
-      }
-    };
-    return btn;
-  }
-
-  function updateActiveButton() {
-    document.querySelectorAll(".page-btn").forEach(btn => {
-      btn.classList.toggle("active", parseInt(btn.dataset.page) === currentPage);
-    });
-  }
-
-  function showError(message) {
-    document.getElementById("loading").style.display = "none";
-    const errorEl = document.getElementById("error");
-    errorEl.style.display = "block";
-    errorEl.innerHTML = `
-      <p>Error loading items: ${message}</p>
-      <p>Please check console for details (Ctrl+Shift+I)</p>
-    `;
-  }
-
-  // Initialize the app
-  modalClose.addEventListener('click', () => {
-    itemModal.style.display = "none";
-  });
-
-  // Close modal when clicking outside
-  itemModal.addEventListener('click', (e) => {
-    if (e.target === itemModal) {
-      itemModal.style.display = "none";
-    }
-  });
-
-  // Search functionality
-  searchInput.addEventListener('input', filterItems);
-
-  // Keyboard shortcuts
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && itemModal.style.display === "flex") {
-      itemModal.style.display = "none";
-    }
-  });
-
-  fetchData();
 </script>
 
 </body>
